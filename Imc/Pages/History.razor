@@ -1,0 +1,76 @@
+﻿@page "/history"
+@using System.Text.Json;
+@layout HistoryLayout
+
+<PageTitle>IMC</PageTitle>
+
+
+
+<h1 class="page_title">Histórico</h1>
+<div class="data_in search">
+    <input type="text" name="" id="in_search" placeholder="Pesquisar...">
+</div>
+@{
+    var twentyFourHoursAgo = DateTime.Now.AddHours(-24);
+}
+
+<ul id="list_historico">
+    @foreach (var item in existingHistory)
+    {
+        <li>
+            <span class="hist_value">@item[0]</span>
+            <div class="hist_content">
+                <div class="hist_msg_head">
+                    <h5 class="hist_title">@item[2] <span class="hist_icon">@item[1]</span></h5>
+                    @if (DateTime.Parse(@item[4]) > twentyFourHoursAgo)
+                    {
+                        <span class="hist_time recent">@GetFriendlyTime(DateTime.Parse(@item[4]))</span>
+                    }
+                    else
+                    {
+                        <span class="hist_time">@DateTime.Parse(@item[4]).ToString("d", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</span>
+                    }
+                </div>
+                <p class="hist_msg">@item[3]</p>
+            </div>
+        </li>
+    }
+</ul>
+
+@code {
+
+
+    private string GetFriendlyTime(DateTime dateTime)
+    {
+        var timeElapsed = DateTime.Now - dateTime;
+        if (timeElapsed.TotalHours >= 1)
+        {
+            return $"{(int)timeElapsed.TotalHours}h{(int)timeElapsed.Minutes}m atrás";
+        }
+        else
+        {
+            return $"{(int)timeElapsed.TotalMinutes}m atrás";
+        }
+    }
+
+    [Inject] protected ILocalStorageService LocalStorage { get; set; }
+
+    List<string[]> existingHistory;
+
+    protected override void OnInitialized()
+    {
+        string data = LocalStorage.GetItem<string>("IMCHistory");
+
+        if (!string.IsNullOrEmpty(data))
+        {
+            existingHistory = JsonSerializer.Deserialize<List<string[]>>(data);
+        }
+        else
+        {
+            existingHistory = new List<string[]>();
+        }
+    }
+}
+
+
+

@@ -1,0 +1,88 @@
+﻿@page "/"
+@using System.Globalization
+@layout MainLayout
+
+<PageTitle>IMC</PageTitle>
+
+
+
+    <h1 class="page_title">Cálculo de IMC</h1>
+    <div class="data_in">
+        <span class="inputs">
+            <input type="number" @bind="Altura" id="in_altura" placeholder="Altura">
+            <input type="number" @bind="Peso" id="in_peso" placeholder="Peso">            
+        </span>
+        <select @bind="Sexo" id="in_sexo">
+            <option value="" disabled selected>Sexo</option>
+            <option value="masculino">Masculino</option>
+            <option value="feminino">Feminino</option>
+        </select>
+        <label class="in_check">
+            <input type="checkbox" @bind="Over65" id="in_65">
+            Eu tenho 65 anos ou mais
+        </label>
+    </div>
+    <div class="btn_area">
+    <ButtonComponent Label="Calcular meu IMC" Primary="true" @onclick="HandleCalcularIMC" />
+    <ButtonComponent Label="Entenda o cálculo" Primary="false" />
+    </div>
+
+
+@code {
+    [Inject] protected ILocalStorageService LocalStorage { get; set; }
+    private string Altura { get; set; }
+    private double Peso { get; set; }
+    private string Sexo { get; set; }
+    private bool Over65 { get; set; } = false;
+    private double Imc { get; set; }
+
+    [Inject] NavigationManager Navigation { get; set; }
+    private void HandleCalcularIMC()
+    {
+        CalcularIMC();
+        Navigation.NavigateTo("Result");
+    }
+
+
+    private void CalcularIMC()
+    {
+        double Imc;
+        // IMC = peso / (altura x altura) (kg/m2)
+
+        //Filtro de Altura
+        string alturaInput = Altura.Replace(',', '.'); // Substitui vírgula por ponto, se necessário
+        alturaInput = alturaInput.Replace("m", ""); // Remove "m", se presente
+        alturaInput = alturaInput.Trim(); // Remove espaços em branco
+
+        if (double.TryParse(alturaInput, NumberStyles.Any, CultureInfo.InvariantCulture, out double altura))
+        {
+            Imc = Peso / (altura * altura);
+
+            if (string.IsNullOrEmpty(Sexo))
+            {
+                Sexo = "default";
+            }
+
+            string[] imcDataArray = new string[] { Imc.ToString("F1", CultureInfo.InvariantCulture), Sexo, Over65.ToString() };
+            LocalStorage.SetItem("IMCResult", imcDataArray);
+        }
+        else
+        {
+            // Pendente: Tratar o caso de 1.90 vs 190
+            // Pendente: Exibir uma mensagem de erro para o usuário
+        }
+    }
+
+
+
+    /*
+    Pendências:
+
+    Feedback visual clicar em "Registrar Medidas"
+    Tela de "Entenda o cálculo", que não está no Figma.
+    Valor do IMC dentro do quadrado cinza em History, com estilo legal.
+
+    */
+}
+
+    
